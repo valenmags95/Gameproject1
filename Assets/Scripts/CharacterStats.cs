@@ -8,9 +8,7 @@ public class CharacterStats : MonoBehaviour
     public int intelligence = 55;
     public int socialLife = 40;
 
-    // Temporary activity system
-    public int activitySlotsPerDay = 1;
-    public int activitySlotsRemaining = 1;
+    public TurnManager turnManager;
 
     void Start()
     {
@@ -18,63 +16,74 @@ public class CharacterStats : MonoBehaviour
         PrintStats();
     }
 
-    public void Study()
+public void Study()
+{
+    if (!CanPerformActivity(15)) return;
+
+    energy -= 15;
+    intelligence += 5;
+
+    ConsumeActivitySlot();
+    ClampStats();
+
+    Debug.Log("You studied.");
+    PrintStats();
+}
+
+public void Rest()
+{
+    if (!CanPerformActivity(0)) return;
+
+    health += 3;
+    energy += 20;
+
+    ConsumeActivitySlot();
+    ClampStats();
+
+    Debug.Log("You rested.");
+    PrintStats();
+}
+
+public void Exercise()
+{
+    if (!CanPerformActivity(20)) return;
+
+    health += 5;
+    energy -= 20;
+
+    ConsumeActivitySlot();
+    ClampStats();
+
+    Debug.Log("You exercised.");
+    PrintStats();
+}
+
+bool CanPerformActivity(int requiredEnergy)
+{
+    if (turnManager == null)
     {
-        if (!CanPerformActivity()) return;
-
-        energy -= 15;
-        intelligence += 5;
-
-        ConsumeActivitySlot();
-        ClampStats();
-
-        Debug.Log("You studied.");
-        PrintStats();
+        Debug.LogError("TurnManager has not been assigned!");
+        return false;
     }
 
-    public void Rest()
+    if (!turnManager.CanPerformActivity())
     {
-        if (!CanPerformActivity()) return;
-
-        health += 3;
-        energy += 20;
-
-        ConsumeActivitySlot();
-        ClampStats();
-
-        Debug.Log("You rested.");
-        PrintStats();
+        Debug.Log("No activity slots remaining today!");
+        return false;
     }
 
-    public void Exercise()
+    if (energy < requiredEnergy)
     {
-        if (!CanPerformActivity()) return;
-
-        health += 5;
-        energy -= 20;
-
-        ConsumeActivitySlot();
-        ClampStats();
-
-        Debug.Log("You exercised.");
-        PrintStats();
+        Debug.Log("Not enough energy! You need at least "
+                  + requiredEnergy + " energy.");
+        return false;
     }
 
-    bool CanPerformActivity()
-    {
-        if (activitySlotsRemaining <= 0)
-        {
-            Debug.Log("No activity slots remaining today!");
-            return false;
-        }
-
-        return true;
-    }
-
+    return true;
+}
     void ConsumeActivitySlot()
     {
-        activitySlotsRemaining--;
-        Debug.Log("Activity slots remaining: " + activitySlotsRemaining);
+        turnManager.UseActivitySlot();
     }
 
     void ClampStats()
